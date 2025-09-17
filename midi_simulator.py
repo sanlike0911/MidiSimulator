@@ -46,29 +46,21 @@ class GamepadMidiController:
 
             if not available_ports:
                 print("利用可能なMIDIポートがありません")
-                print("仮想MIDIポートを作成しますか? (y/n): ", end="")
-                if input().lower() in ['y', 'yes', 'はい']:
-                    return -1  # 仮想ポートを示す特別な値
-                else:
-                    return None
+                return None
 
             print("\n利用可能なMIDIポート:")
             for i, port in enumerate(available_ports):
                 print(f"  {i}: {port}")
 
-            print(f"  {len(available_ports)}: 仮想MIDIポートを作成")
-
             while True:
                 try:
-                    choice = input(f"\nMIDIポートを選択してください (0-{len(available_ports)}): ")
+                    choice = input(f"\nMIDIポートを選択してください (0-{len(available_ports)-1}): ")
                     port_index = int(choice)
 
-                    if port_index == len(available_ports):
-                        return -1  # 仮想ポート
-                    elif 0 <= port_index < len(available_ports):
+                    if 0 <= port_index < len(available_ports):
                         return port_index
                     else:
-                        print(f"無効な選択です。0-{len(available_ports)}の範囲で入力してください。")
+                        print(f"無効な選択です。0-{len(available_ports)-1}の範囲で入力してください。")
 
                 except ValueError:
                     print("数字を入力してください。")
@@ -91,18 +83,13 @@ class GamepadMidiController:
             if not self.midi_out:
                 self.midi_out = rtmidi.MidiOut()
 
-            if port_index == -1:
-                # 仮想MIDIポートを作成
-                self.midi_out.open_virtual_port("MIDI Simulator")
-                print("仮想MIDIポート 'MIDI Simulator' を作成しました")
+            available_ports = self.midi_out.get_ports()
+            if port_index < len(available_ports):
+                self.midi_out.open_port(port_index)
+                print(f"MIDIポート '{available_ports[port_index]}' に接続しました")
             else:
-                available_ports = self.midi_out.get_ports()
-                if port_index < len(available_ports):
-                    self.midi_out.open_port(port_index)
-                    print(f"MIDIポート '{available_ports[port_index]}' に接続しました")
-                else:
-                    print("選択されたポートが利用できません")
-                    return False
+                print("選択されたポートが利用できません")
+                return False
 
             return True
 

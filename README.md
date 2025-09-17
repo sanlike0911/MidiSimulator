@@ -118,7 +118,6 @@ python midi_simulator.py
 3. **MIDIポートの選択**
    - 利用可能なMIDIポートが一覧表示される
    - 番号を入力してポートを選択
-   - 仮想MIDIポートの作成も可能
 
 4. **ゲームパッドの選択**
    - 複数のゲームパッドが接続されている場合は選択メニューが表示される
@@ -230,10 +229,9 @@ MIDI Simulator - 14-bit CC Gamepad Controller
 
 利用可能なMIDIポート:
   0: Microsoft GS Wavetable Synth 0
-  1: loopMIDI Port 1
-  2: 仮想MIDIポートを作成
+  1: loopMIDI_Port1
 
-MIDIポートを選択してください (0-2): 1
+MIDIポートを選択してください (0-1): 1
 MIDIポート 'loopMIDI Port 1' に接続しました
 
 ゲームパッドを検出しました: Xbox Controller

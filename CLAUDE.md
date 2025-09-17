@@ -17,7 +17,6 @@ This is a Python application that converts gamepad input into 14-bit MIDI CC (Co
   - MIDI output via python-rtmidi
   - 14-bit CC message generation and transmission
   - Real-time input processing with deadzone handling
-  - Virtual MIDI port creation option
 
 - **`setup.py`** - Automated setup script that checks dependencies, installs packages, and can launch the simulator
 
@@ -95,13 +94,12 @@ python setup.py
 
 The application provides interactive device selection at startup:
 - **MIDI Port Selection**: Lists available MIDI ports and allows user selection
-- **Virtual Port Creation**: Option to create virtual MIDI ports if none available
 - **Gamepad Selection**: Automatic selection for single gamepad, menu for multiple
 - **Error Handling**: Graceful handling of device connection failures
 
 ## MIDI Device Setup
 
-The application can create virtual MIDI ports automatically or connect to existing ones. The README.md contains detailed setup instructions for loopMIDI and DAW configuration.
+The application connects to existing MIDI ports. The README.md contains detailed setup instructions for loopMIDI and DAW configuration.
 
 ## Code Patterns
 
