@@ -194,10 +194,12 @@ class GamepadMidiController:
         # LSBを先に送信
         cc_lsb_msg = [0xB0, cc_lsb, lsb]
         self.midi_out.send_message(cc_lsb_msg)
+        print(f"    MIDI: CC#{cc_lsb}(LSB)={lsb}")
 
         # MSBを後から送信
         cc_msb_msg = [0xB0, cc_msb, msb]
         self.midi_out.send_message(cc_msb_msg)
+        print(f"    MIDI: CC#{cc_msb}(MSB)={msb} [14bit={value}]")
 
     def get_stick_values(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         """スティック値を取得"""
