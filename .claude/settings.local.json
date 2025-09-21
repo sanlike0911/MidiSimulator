@@ -5,7 +5,8 @@
       "Bash(python:*)",
       "Bash(.venvScriptsactivate)",
       "Bash(pip install:*)",
-      "Bash(\".venv/Scripts/activate\")"
+      "Bash(\".venv/Scripts/activate\")",
+      "Bash(\".venv\\Scripts\\activate\")"
     ],
     "deny": [],
     "ask": []

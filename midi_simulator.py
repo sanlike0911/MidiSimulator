@@ -13,6 +13,7 @@ from typing import Tuple, Optional
 class GamepadMidiController:
     def __init__(self):
         self.midi_out = None
+        self.midi_in = None
         self.joystick = None
         self.running = True
 
@@ -71,6 +72,43 @@ class GamepadMidiController:
             print(f"MIDIポート検索エラー: {e}")
             return None
 
+    def select_midi_input_port(self) -> Optional[int]:
+        """利用可能なMIDI入力ポートを表示し、ユーザーに選択させる"""
+        try:
+            temp_midi_in = rtmidi.MidiIn()
+            available_ports = temp_midi_in.get_ports()
+
+            if not available_ports:
+                print("利用可能なMIDI入力ポートがありません")
+                return None
+
+            print("\n利用可能なMIDI入力ポート:")
+            for i, port in enumerate(available_ports):
+                print(f"  {i}: {port}")
+
+            while True:
+                try:
+                    choice = input(f"\nMIDI入力ポートを選択してください (0-{len(available_ports)-1}, スキップする場合はEnter): ")
+
+                    if choice.strip() == "":
+                        return None
+
+                    port_index = int(choice)
+
+                    if 0 <= port_index < len(available_ports):
+                        return port_index
+                    else:
+                        print(f"無効な選択です。0-{len(available_ports)-1}の範囲で入力してください。")
+
+                except ValueError:
+                    print("数字を入力してください。")
+                except KeyboardInterrupt:
+                    return None
+
+        except Exception as e:
+            print(f"MIDI入力ポート検索エラー: {e}")
+            return None
+
     def init_midi(self, port_index: Optional[int] = None) -> bool:
         """MIDI出力を初期化"""
         try:
@@ -96,6 +134,66 @@ class GamepadMidiController:
         except Exception as e:
             print(f"MIDI初期化エラー: {e}")
             return False
+
+    def init_midi_input(self, port_index: Optional[int] = None) -> bool:
+        """MIDI入力を初期化"""
+        try:
+            if port_index is None:
+                port_index = self.select_midi_input_port()
+
+            if port_index is None:
+                print("MIDI入力をスキップします")
+                return True
+
+            self.midi_in = rtmidi.MidiIn()
+            available_ports = self.midi_in.get_ports()
+
+            if port_index < len(available_ports):
+                self.midi_in.open_port(port_index)
+                self.midi_in.set_callback(self.midi_input_callback)
+                print(f"MIDI入力ポート '{available_ports[port_index]}' に接続しました")
+            else:
+                print("選択されたMIDI入力ポートが利用できません")
+                return False
+
+            return True
+
+        except Exception as e:
+            print(f"MIDI入力初期化エラー: {e}")
+            return False
+
+    def midi_input_callback(self, message, data=None):
+        """MIDI入力コールバック - 受信データをデバッグ出力"""
+        msg, timestamp = message
+
+        if len(msg) >= 2:
+            status = msg[0]
+
+            if status & 0xF0 == 0xB0:  # Control Change
+                cc_number = msg[1]
+                cc_value = msg[2] if len(msg) > 2 else 0
+                channel = (status & 0x0F) + 1
+
+                print(f"[MIDI入力] Ch.{channel} CC#{cc_number} = {cc_value} (0x{cc_value:02X}) [{' '.join(f'0x{b:02X}' for b in msg)}]")
+
+            elif status & 0xF0 == 0x90:  # Note On
+                note = msg[1]
+                velocity = msg[2] if len(msg) > 2 else 0
+                channel = (status & 0x0F) + 1
+
+                print(f"[MIDI入力] Ch.{channel} Note On: {note} vel={velocity} [{' '.join(f'0x{b:02X}' for b in msg)}]")
+
+            elif status & 0xF0 == 0x80:  # Note Off
+                note = msg[1]
+                velocity = msg[2] if len(msg) > 2 else 0
+                channel = (status & 0x0F) + 1
+
+                print(f"[MIDI入力] Ch.{channel} Note Off: {note} vel={velocity} [{' '.join(f'0x{b:02X}' for b in msg)}]")
+
+            else:
+                print(f"[MIDI入力] Raw: [{' '.join(f'0x{b:02X}' for b in msg)}]")
+        else:
+            print(f"[MIDI入力] Raw: [{' '.join(f'0x{b:02X}' for b in msg)}]")
 
     def select_gamepad(self) -> Optional[int]:
         """利用可能なゲームパッドを表示し、ユーザーに選択させる"""
@@ -253,7 +351,11 @@ class GamepadMidiController:
         print("\n=== デバイス選択 ===")
 
         if not self.init_midi():
-            print("MIDIデバイスの初期化に失敗しました")
+            print("MIDI出力デバイスの初期化に失敗しました")
+            return False
+
+        if not self.init_midi_input():
+            print("MIDI入力デバイスの初期化に失敗しました")
             return False
 
         if not self.init_gamepad():
@@ -262,6 +364,8 @@ class GamepadMidiController:
 
         print("\n動作開始 (Ctrl+Cで終了)")
         print("スティックを動かしてMIDI CCを送信してください")
+        if self.midi_in:
+            print("MIDI入力データも受信・表示します")
         print("-" * 50)
 
         try:
@@ -278,6 +382,9 @@ class GamepadMidiController:
         """リソースの解放"""
         if self.joystick:
             self.joystick.quit()
+
+        if self.midi_in:
+            self.midi_in.close_port()
 
         if self.midi_out:
             self.midi_out.close_port()
